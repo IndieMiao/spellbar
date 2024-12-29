@@ -1,0 +1,7 @@
+## Interface: 11200
+## Title: Spell Bar 
+## Notes: Displays specific spell icons and cooldowns.
+## Author: Emberol
+## Version: 0.1
+
+SpellBar.lua
