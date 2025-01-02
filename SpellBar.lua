@@ -9,7 +9,7 @@ local uiOption = { frame_w = 200,
                    icon_h = 24,
                    padding = 24+1,
                    bgColor = {0.1, 0.1, 0.1, 0.6},
-                   spellInCd = { 0.5, 0.5, 1.0, 1},
+                   spellInCd = { 0.6, 0.6, 0.6, 1},
                    spellReady = { 1, 1, 1, 1},
                    scale = SpellBarSettings.scale,
                    opacity = SpellBarSettings.opacity
@@ -144,6 +144,9 @@ local function createIconAndCooldown(parent, texture, xOffset)
 
     local timerText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     timerText:SetPoint("CENTER", icon, "CENTER")
+    timerText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE") -- Add outline to the font
+    -- To add shadow instead, use the following line:
+     timerText:SetShadowOffset(1, -1)
     table.insert(timerTexts, timerText)
 end
 
@@ -189,11 +192,12 @@ local function updateCooldowns()
         local spellBookId = spell.id
         if spellBookId then
             local start, duration, enable = GetSpellCooldown(spellBookId, BOOKTYPE_SPELL)
+            local inRange = IsSpellInRange(spell.name, "target")
             if enable == 1 and duration > 1.5 then
                 local remaining = start + duration - GetTime()
                 if timerTexts[i] then
                     if remaining > 99 then
-                        local minutes = math.floor(remaining / 60)+1
+                        local minutes = math.floor(remaining / 60) + 1
                         timerTexts[i]:SetText("|cff87ffff" .. minutes .. "|r|cffffffffm|r") -- Light blue for number, white for "m"
                     elseif remaining > 3 then
                         timerTexts[i]:SetText("|cffffffff" .. math.ceil(remaining) .. "|r") -- White color
@@ -201,12 +205,20 @@ local function updateCooldowns()
                         timerTexts[i]:SetText("|cffff0000" .. string.format("%.1f", remaining) .. "|r") -- Red color
                     end
                 end
-                icons[i]:SetVertexColor(uiOption.spellInCd[1], uiOption.spellInCd[2], uiOption.spellInCd[3], uiOption.spellInCd[4])
+                if inRange == 0 then
+                    icons[i]:SetVertexColor(1, 0, 0, 1) -- Red color for out of range
+                else
+                    icons[i]:SetVertexColor(uiOption.spellInCd[1], uiOption.spellInCd[2], uiOption.spellInCd[3], uiOption.spellInCd[4])
+                end
             elseif duration <= 1.5 then
                 if timerTexts[i] then
                     timerTexts[i]:SetText("")
                 end
-                icons[i]:SetVertexColor(uiOption.spellReady[1], uiOption.spellReady[2], uiOption.spellReady[3], uiOption.spellReady[4])
+                if inRange == 0 then
+                    icons[i]:SetVertexColor(1, 0, 0, 1) -- Red color for out of range
+                else
+                    icons[i]:SetVertexColor(uiOption.spellReady[1], uiOption.spellReady[2], uiOption.spellReady[3], uiOption.spellReady[4])
+                end
             end
         end
     end
