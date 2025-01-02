@@ -144,6 +144,7 @@ local function initializeSpellsAndItems()
 
         local _, playerClass = UnitClass("player")
         if playerClass == "Shaman" then
+            DebugLog("Player is a Shaman")
             OriginSpells = SHAMAN_SPELL
         elseif playerClass == "Warlock" then
             DebugLog("Player is a Warlock") 
