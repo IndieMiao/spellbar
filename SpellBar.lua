@@ -307,6 +307,14 @@ SlashCmdList["SPELLBAR"] = function(msg)
         else
             DebugLog("Invalid opacity value.")
         end
+    elseif command == "help" then
+        DebugLog("Available commands:")
+        DebugLog("/spellbar debug - Toggle debug mode")
+        DebugLog("/spellbar lock - Lock the SpellBar frame")
+        DebugLog("/spellbar unlock - Unlock the SpellBar frame")
+        DebugLog("/spellbar reset - Reset the SpellBar frame position, scale, and opacity")
+        DebugLog("/spellbar scale <value> - Set the SpellBar frame scale")
+        DebugLog("/spellbar opacity <value> - Set the SpellBar frame opacity")
     else
         DebugLog("Unknown command: " .. command)
     end
