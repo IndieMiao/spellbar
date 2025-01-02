@@ -143,11 +143,11 @@ local function initializeSpellsAndItems()
     --OriginSpells = WARLOCK_SPELL
 
         local _, playerClass = UnitClass("player")
+        DebugLog("Player is a :" .. playerClass)
         if playerClass == "Shaman" then
             DebugLog("Player is a Shaman")
             OriginSpells = SHAMAN_SPELL
         elseif playerClass == "Warlock" then
-            DebugLog("Player is a Warlock") 
             OriginSpells = WARLOCK_SPELL
         end
 
