@@ -3,5 +3,6 @@
 ## Notes: Displays specific spell icons and cooldowns.
 ## Author: Emberol
 ## Version: 0.1
+## SavedVariablesPerCharacter: SpellBarSettings
 
 SpellBar.lua

@@ -1,12 +1,15 @@
+-- Initialize saved variables
+SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = -150 }
+
 local uiOption = { frame_w = 200,
                    frame_h = 24,
-                   offset_x = 0,
-                   offset_y = -150,
+                   offset_x = SpellBarSettings.offset_x,
+                   offset_y = SpellBarSettings.offset_y,
                    icon_w = 24,
                    icon_h = 24,
                    padding = 24+1,
                    bgColor = {0.1, 0.1, 0.1, 0.6},
-                   spellInCd = { 0.2, 0.2, 0.8, 1},
+                   spellInCd = { 0.5, 0.5, 1.0, 1},
                    spellReady = { 1, 1, 1, 1},
 }
 
@@ -14,12 +17,49 @@ local SpellBarFrame = CreateFrame("Frame")
 SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', uiOption.offset_x, uiOption.offset_y)
 SpellBarFrame:SetWidth(uiOption.frame_w)
 SpellBarFrame:SetHeight(uiOption.frame_h)
---SpellBarFrame:SetBackdrop({bgFile = 'Interface\\Tooltips\\UI-Tooltip-Background'})
---SpellBarFrame:SetBackdropColor(uiOption.bgColor[1], uiOption.bgColor[2], uiOption.bgColor[3], uiOption.bgColor[4])
 SpellBarFrame:Show()
 
+local function saveFramePosition()
+    local point, relativeTo, relativePoint, xOfs, yOfs = SpellBarFrame:GetPoint()
+    SpellBarSettings.offset_x = xOfs
+    SpellBarSettings.offset_y = yOfs
+end
+
+local function enableDragging(frame)
+    frame:SetMovable(true)
+    frame:EnableMouse(true)
+    frame:RegisterForDrag("LeftButton")
+    frame:SetScript("OnDragStart", function()
+        frame:StartMoving()
+    end)
+    frame:SetScript("OnDragStop", function()
+        frame:StopMovingOrSizing()
+        saveFramePosition()
+    end)
+end
+
+local function disableDragging(frame)
+    frame:SetMovable(false)
+    frame:EnableMouse(false)
+    frame:RegisterForDrag(nil)
+    frame:SetScript("OnDragStart", nil)
+    frame:SetScript("OnDragStop", nil)
+end
+
+local function toggleLock()
+    isLocked = not isLocked
+    if isLocked then
+        disableDragging(SpellBarFrame)
+        print("SpellBar frame locked.")
+    else
+        enableDragging(SpellBarFrame)
+        print("SpellBar frame unlocked. Drag to move.")
+    end
+end
 
 local debugMode = false-- Set to true to enable debug mode
+local isLocked = true
+
 
 local OriginSpells = {}
 local RealSpells = {}
@@ -31,9 +71,11 @@ local items = {
     {name = "Eye of the Dead"},
 }
 
-local SHAMMAN_SPELL = {
+local SHAMAN_SPELL = {
     {name = "Stormstrike"},
-
+    {name = "Lightning Strike"},
+    {name = "Earth Shock"},
+    {name = "Chain Lightning"},
 }
 
 local MAGE_SPELL = {
@@ -98,11 +140,11 @@ local function createIconAndCooldown(parent, texture, xOffset)
 end
 
 local function initializeSpellsAndItems()
-    OriginSpells = WARLOCK_SPELL
+    --OriginSpells = WARLOCK_SPELL
 
         local _, playerClass = UnitClass("player")
         if playerClass == "Shaman" then
-            OriginSpells = SHAMMAN_SPELL
+            OriginSpells = SHAMAN_SPELL
         elseif playerClass == "Warlock" then
             DebugLog("Player is a Warlock") 
             OriginSpells = WARLOCK_SPELL
@@ -178,14 +220,23 @@ updateFrame:SetScript("OnUpdate", function()
     updateCooldowns()
 end)
 
--- Slash command to toggle debug mode and display all Shaman icons
+
 SLASH_SPELLBAR1 = "/spellbar"
 SlashCmdList["SPELLBAR"] = function(msg)
     if msg == "debug" then
         debugMode = not debugMode
         DebugLog("Debug mode is now " .. (debugMode and "enabled" or "disabled"))
-        -- Reinitialize spells and items to reflect the change in debug mode
         initializeSpellsAndItems()
         updateCooldowns()
+    elseif msg == "lock" then
+        toggleLock()
     end
+end
+
+-- Initialize frame position and lock state
+SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', uiOption.offset_x, uiOption.offset_y)
+if isLocked then
+    disableDragging(SpellBarFrame)
+else
+    enableDragging(SpellBarFrame)
 end
