@@ -1,5 +1,5 @@
 -- Initialize saved variables
-SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = -150 }
+SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = 0, scale = 1.2, opacity = 0.7 }
 
 local uiOption = { frame_w = 200,
                    frame_h = 24,
@@ -11,6 +11,8 @@ local uiOption = { frame_w = 200,
                    bgColor = {0.1, 0.1, 0.1, 0.6},
                    spellInCd = { 0.5, 0.5, 1.0, 1},
                    spellReady = { 1, 1, 1, 1},
+                   scale = SpellBarSettings.scale,
+                   opacity = SpellBarSettings.opacity
 }
 
 local SpellBarFrame = CreateFrame("Frame")
@@ -19,10 +21,15 @@ SpellBarFrame:SetWidth(uiOption.frame_w)
 SpellBarFrame:SetHeight(uiOption.frame_h)
 SpellBarFrame:Show()
 
+SpellBarFrame:SetScale(uiOption.scale)
+SpellBarFrame:SetAlpha(uiOption.opacity)
+
 local function saveFramePosition()
     local point, relativeTo, relativePoint, xOfs, yOfs = SpellBarFrame:GetPoint()
     SpellBarSettings.offset_x = xOfs
     SpellBarSettings.offset_y = yOfs
+    SpellBarSettings.scale = uiOption.scale
+    SpellBarSettings.opacity = uiOption.opacity
 end
 
 local function enableDragging(frame)
@@ -72,10 +79,11 @@ local items = {
 }
 
 local SHAMAN_SPELL = {
+    {name = "Earth Shock"},
     {name = "Stormstrike"},
     {name = "Lightning Strike"},
-    {name = "Earth Shock"},
     {name = "Chain Lightning"},
+    {name = "Fire Nova Totem"},
 }
 
 local MAGE_SPELL = {
@@ -144,10 +152,10 @@ local function initializeSpellsAndItems()
 
         local _, playerClass = UnitClass("player")
         DebugLog("Player is a :" .. playerClass)
-        if playerClass == "Shaman" then
+        if playerClass == "SHAMAN" then
             DebugLog("Player is a Shaman")
             OriginSpells = SHAMAN_SPELL
-        elseif playerClass == "Warlock" then
+        elseif playerClass == "WARLOCK" then
             OriginSpells = WARLOCK_SPELL
         end
 
@@ -222,22 +230,72 @@ updateFrame:SetScript("OnUpdate", function()
 end)
 
 
-SLASH_SPELLBAR1 = "/spellbar"
-SlashCmdList["SPELLBAR"] = function(msg)
-    if msg == "debug" then
-        debugMode = not debugMode
-        DebugLog("Debug mode is now " .. (debugMode and "enabled" or "disabled"))
-        initializeSpellsAndItems()
-        updateCooldowns()
-    elseif msg == "lock" then
-        toggleLock()
-    end
-end
-
 -- Initialize frame position and lock state
 SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', uiOption.offset_x, uiOption.offset_y)
 if isLocked then
     disableDragging(SpellBarFrame)
 else
     enableDragging(SpellBarFrame)
+end
+
+local function resetPosition()
+    SpellBarSettings.offset_x = 0
+    SpellBarSettings.offset_y = -150
+    SpellBarSettings.scale = 1
+    SpellBarSettings.opacity = 1
+    SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', SpellBarSettings.offset_x, SpellBarSettings.offset_y)
+    SpellBarFrame:SetScale(SpellBarSettings.scale)
+    SpellBarFrame:SetAlpha(SpellBarSettings.opacity)
+    DebugLog("SpellBar frame position, scale, and opacity reset.")
+end
+
+SLASH_SPELLBAR1 = "/spellbar"
+SlashCmdList["SPELLBAR"] = function(msg)
+    local command, value = "", ""
+    local spaceIndex = string.find(msg, " ")
+    if spaceIndex then
+        command = string.sub(msg, 1, spaceIndex - 1)
+        value = string.sub(msg, spaceIndex + 1)
+    else
+        command = msg
+    end
+
+    if command == "debug" then
+        debugMode = not debugMode
+        DebugLog("Debug mode is now " .. (debugMode and "enabled" or "disabled"))
+        initializeSpellsAndItems()
+        updateCooldowns()
+    elseif command == "lock" then
+        isLocked = true
+        disableDragging(SpellBarFrame)
+        DebugLog("SpellBar frame locked.")
+    elseif command == "unlock" then
+        isLocked = false
+        enableDragging(SpellBarFrame)
+        DebugLog("SpellBar frame unlocked. Drag to move.")
+    elseif command == "reset" then
+        resetPosition()
+    elseif command == "scale" then
+        local scale = tonumber(value)
+        if scale then
+            uiOption.scale = scale
+            SpellBarFrame:SetScale(scale)
+            saveFramePosition()
+            DebugLog("SpellBar frame scale set to " .. scale)
+        else
+            DebugLog("Invalid scale value.")
+        end
+    elseif command == "opacity" then
+        local opacity = tonumber(value)
+        if opacity then
+            uiOption.opacity = opacity
+            SpellBarFrame:SetAlpha(opacity)
+            saveFramePosition()
+            DebugLog("SpellBar frame opacity set to " .. opacity)
+        else
+            DebugLog("Invalid opacity value.")
+        end
+    else
+        DebugLog("Unknown command: " .. command)
+    end
 end
