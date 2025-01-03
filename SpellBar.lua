@@ -1,22 +1,39 @@
 -- Initialize saved variables
 SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = 0, scale = 1.2, opacity = 0.7 }
 
+
+
+local function DebugLog(message)
+    if debugMode then
+        DEFAULT_CHAT_FRAME:AddMessage("SPELL_BAR: "..message)
+    end
+end
+
+local function DebugSettings()
+    DebugLog("offset_x: " .. tostring(SpellBarSettings.offset_x))
+    DebugLog("offset_y: " .. tostring(SpellBarSettings.offset_y))
+    DebugLog("scale: " .. tostring(SpellBarSettings.scale))
+    DebugLog("opacity: " .. tostring(SpellBarSettings.opacity))
+end
+
+DebugLog(SpellBarSettings.offset_x.." "..SpellBarSettings.offset_y.." "..SpellBarSettings.scale.." "..SpellBarSettings.opacity)
+
 local uiOption = { frame_w = 200,
                    frame_h = 24,
-                   offset_x = SpellBarSettings.offset_x,
-                   offset_y = SpellBarSettings.offset_y,
+                   offset_x = 0,
+                   offset_y = 0,
                    icon_w = 24,
                    icon_h = 24,
                    padding = 24+1,
                    bgColor = {0.1, 0.1, 0.1, 0.6},
-                   spellInCd = { 0.6, 0.6, 0.6, 1},
+                   spellInCd = { 0.5, 0.5, 0.5, 1},
                    spellReady = { 1, 1, 1, 1},
-                   scale = SpellBarSettings.scale,
-                   opacity = SpellBarSettings.opacity
+                   scale = 1,
+                   opacity = 0.7
 }
 
-local SpellBarFrame = CreateFrame("Frame")
-SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', uiOption.offset_x, uiOption.offset_y)
+local SpellBarFrame = CreateFrame("Frame", "SpellBarFrame", UIParent)
+SpellBarFrame:SetPoint("TOPLEFT", uiOption.offset_x, uiOption.offset_y)
 SpellBarFrame:SetWidth(uiOption.frame_w)
 SpellBarFrame:SetHeight(uiOption.frame_h)
 SpellBarFrame:Show()
@@ -24,12 +41,19 @@ SpellBarFrame:Show()
 SpellBarFrame:SetScale(uiOption.scale)
 SpellBarFrame:SetAlpha(uiOption.opacity)
 
-local function saveFramePosition()
+
+local function saveFrameSettings()
     local point, relativeTo, relativePoint, xOfs, yOfs = SpellBarFrame:GetPoint()
+    DebugLog("Save frame position"..point.." "..relativePoint.." " ..xOfs.." "..yOfs)
     SpellBarSettings.offset_x = xOfs
     SpellBarSettings.offset_y = yOfs
     SpellBarSettings.scale = uiOption.scale
     SpellBarSettings.opacity = uiOption.opacity
+end
+local function reloadFrameSettings()
+    SpellBarFrame:SetPoint("TOPLEFT", SpellBarSettings.offset_x, SpellBarSettings.offset_y)
+    SpellBarFrame:SetScale(SpellBarSettings.scale)
+    SpellBarFrame:SetAlpha(SpellBarSettings.opacity)
 end
 
 local function enableDragging(frame)
@@ -41,7 +65,7 @@ local function enableDragging(frame)
     end)
     frame:SetScript("OnDragStop", function()
         frame:StopMovingOrSizing()
-        saveFramePosition()
+        saveFrameSettings()
     end)
 end
 
@@ -104,9 +128,7 @@ local WARRIOR_SPELL = {
     {name = "Overpower"},
     {name = "Mortal Strike"},
 }
-local function DebugLog(message)
-    DEFAULT_CHAT_FRAME:AddMessage("Spell bar log "..message)
-end
+
 
 
 local function GetTexIcon(spellname)
@@ -145,34 +167,35 @@ local function createIconAndCooldown(parent, texture, xOffset)
     local timerText = parent:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     timerText:SetPoint("CENTER", icon, "CENTER")
     timerText:SetFont("Fonts\\FRIZQT__.TTF", 12, "OUTLINE") -- Add outline to the font
-    -- To add shadow instead, use the following line:
-     timerText:SetShadowOffset(1, -1)
+    timerText:SetShadowOffset(1, -1)
     table.insert(timerTexts, timerText)
 end
 
 local function initializeSpellsAndItems()
-    --OriginSpells = WARLOCK_SPELL
-
-        local _, playerClass = UnitClass("player")
-        DebugLog("Player is a :" .. playerClass)
-        if playerClass == "SHAMAN" then
-            DebugLog("Player is a Shaman")
-            OriginSpells = SHAMAN_SPELL
-        elseif playerClass == "WARLOCK" then
-            OriginSpells = WARLOCK_SPELL
-        end
+    local _, playerClass = UnitClass("player")
+    if playerClass == "SHAMAN" then
+        DebugLog("Player is a Shaman")
+        OriginSpells = SHAMAN_SPELL
+    elseif playerClass == "WARLOCK" then
+        OriginSpells = WARLOCK_SPELL
+    end
 
     local totalIcons = 0
-
     for i, spell in ipairs(OriginSpells) do
         local spellbookId = getSpellBookId(spell.name)
-        local spellIcon = GetTexIcon(spell.name,BOOKTYPE_SPELL)
+        local spellIcon = GetTexIcon(spell.name, BOOKTYPE_SPELL)
         if spellbookId then
             table.insert(RealSpells, {name = spell.name, id = spellbookId})
-            DebugLog("Spell book ID: " ..spellbookId .. " Spell Name: " .. spell.name .. " Spell Icon: " .. spellIcon)
-            createIconAndCooldown(SpellBarFrame, spellIcon, totalIcons * uiOption.padding)
+            DebugLog("Spell book ID: " .. spellbookId .. " Spell Name: " .. spell.name .. " Spell Icon: " .. spellIcon)
             totalIcons = totalIcons + 1
         end
+    end
+
+    local totalWidth = totalIcons * uiOption.padding
+    local startXOffset = (uiOption.frame_w - totalWidth) / 2
+
+    for i, spell in ipairs(RealSpells) do
+        createIconAndCooldown(SpellBarFrame, GetTexIcon(spell.name), startXOffset + (i - 1) * uiOption.padding)
     end
 end
 
@@ -227,14 +250,22 @@ end
 SpellBarFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 SpellBarFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
 SpellBarFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+SpellBarFrame:RegisterEvent("ADDON_LOADED")
 
 SpellBarFrame:SetScript("OnEvent", function()
+    if event == "ADDON_LOADED" and arg1 == "SpellBar" then
+        -- Initialize SpellBarSettings after the addon has loaded
+        SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = 0, scale = 1.2, opacity = 0.7 }
+        DebugSettings()
+        reloadFrameSettings()
+    end
     if event == "PLAYER_ENTERING_WORLD" then
         initializeSpellsAndItems()
     end
     if event == "SPELL_UPDATE_COOLDOWN" then
         updateCooldowns()
     end
+
 end)
 local updateFrame = CreateFrame("Frame")
 updateFrame:SetScript("OnUpdate", function()
@@ -243,22 +274,10 @@ end)
 
 
 -- Initialize frame position and lock state
-SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', uiOption.offset_x, uiOption.offset_y)
 if isLocked then
     disableDragging(SpellBarFrame)
 else
     enableDragging(SpellBarFrame)
-end
-
-local function resetPosition()
-    SpellBarSettings.offset_x = 0
-    SpellBarSettings.offset_y = -150
-    SpellBarSettings.scale = 1
-    SpellBarSettings.opacity = 1
-    SpellBarFrame:SetPoint("CENTER", UIParent, 'CENTER', SpellBarSettings.offset_x, SpellBarSettings.offset_y)
-    SpellBarFrame:SetScale(SpellBarSettings.scale)
-    SpellBarFrame:SetAlpha(SpellBarSettings.opacity)
-    DebugLog("SpellBar frame position, scale, and opacity reset.")
 end
 
 SLASH_SPELLBAR1 = "/spellbar"
@@ -285,14 +304,14 @@ SlashCmdList["SPELLBAR"] = function(msg)
         isLocked = false
         enableDragging(SpellBarFrame)
         DebugLog("SpellBar frame unlocked. Drag to move.")
-    elseif command == "reset" then
-        resetPosition()
+    --elseif command == "reset" then
+    --    resetPosition()
     elseif command == "scale" then
         local scale = tonumber(value)
         if scale then
             uiOption.scale = scale
             SpellBarFrame:SetScale(scale)
-            saveFramePosition()
+            saveFrameSettings()
             DebugLog("SpellBar frame scale set to " .. scale)
         else
             DebugLog("Invalid scale value.")
@@ -302,7 +321,7 @@ SlashCmdList["SPELLBAR"] = function(msg)
         if opacity then
             uiOption.opacity = opacity
             SpellBarFrame:SetAlpha(opacity)
-            saveFramePosition()
+            saveFrameSettings()
             DebugLog("SpellBar frame opacity set to " .. opacity)
         else
             DebugLog("Invalid opacity value.")
