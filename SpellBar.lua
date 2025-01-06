@@ -1,7 +1,4 @@
 -- Initialize saved variables
-SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = 0, scale = 1.2, opacity = 0.7 }
-
-
 
 local function DebugLog(message)
     if debugMode then
@@ -9,87 +6,75 @@ local function DebugLog(message)
     end
 end
 
-local function DebugSettings()
-    DebugLog("offset_x: " .. tostring(SpellBarSettings.offset_x))
-    DebugLog("offset_y: " .. tostring(SpellBarSettings.offset_y))
-    DebugLog("scale: " .. tostring(SpellBarSettings.scale))
-    DebugLog("opacity: " .. tostring(SpellBarSettings.opacity))
-end
-
-DebugLog(SpellBarSettings.offset_x.." "..SpellBarSettings.offset_y.." "..SpellBarSettings.scale.." "..SpellBarSettings.opacity)
-
 local uiOption = { frame_w = 200,
                    frame_h = 24,
                    offset_x = 0,
-                   offset_y = 0,
+                   offset_y = -90,
                    icon_w = 24,
                    icon_h = 24,
                    padding = 24+1,
                    bgColor = {0.1, 0.1, 0.1, 0.6},
                    spellInCd = { 0.5, 0.5, 0.5, 1},
                    spellReady = { 1, 1, 1, 1},
-                   scale = 1,
-                   opacity = 0.7
+                   scale = 1.2,
+                   opacity = 0.3
 }
 
 local SpellBarFrame = CreateFrame("Frame", "SpellBarFrame", UIParent)
-SpellBarFrame:SetPoint("TOPLEFT", uiOption.offset_x, uiOption.offset_y)
+SpellBarFrame:SetPoint("CENTER", uiOption.offset_x, uiOption.offset_y)
 SpellBarFrame:SetWidth(uiOption.frame_w)
 SpellBarFrame:SetHeight(uiOption.frame_h)
 SpellBarFrame:Show()
 
-SpellBarFrame:SetScale(uiOption.scale)
-SpellBarFrame:SetAlpha(uiOption.opacity)
+--local function saveFrameSettings()
+--    local point, relativeTo, relativePoint, xOfs, yOfs = SpellBarFrame:GetPoint()
+--    DebugLog("Save frame position"..point.." "..relativePoint.." " ..xOfs.." "..yOfs)
+--    SpellBarSettings.offset_x = xOfs
+--    SpellBarSettings.offset_y = yOfs
+--    SpellBarSettings.scale = uiOption.scale
+--    SpellBarSettings.opacity = uiOption.opacity
+--end
 
-
-local function saveFrameSettings()
-    local point, relativeTo, relativePoint, xOfs, yOfs = SpellBarFrame:GetPoint()
-    DebugLog("Save frame position"..point.." "..relativePoint.." " ..xOfs.." "..yOfs)
-    SpellBarSettings.offset_x = xOfs
-    SpellBarSettings.offset_y = yOfs
-    SpellBarSettings.scale = uiOption.scale
-    SpellBarSettings.opacity = uiOption.opacity
-end
 local function reloadFrameSettings()
-    SpellBarFrame:SetPoint("TOPLEFT", SpellBarSettings.offset_x, SpellBarSettings.offset_y)
-    SpellBarFrame:SetScale(SpellBarSettings.scale)
-    SpellBarFrame:SetAlpha(SpellBarSettings.opacity)
+    SpellBarFrame:SetPoint("CENTER", uiOption.offset_x, uiOption.offset_y)
+    SpellBarFrame:SetScale(uiOption.scale)
+    SpellBarFrame:SetAlpha(uiOption.opacity)
 end
 
-local function enableDragging(frame)
-    frame:SetMovable(true)
-    frame:EnableMouse(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", function()
-        frame:StartMoving()
-    end)
-    frame:SetScript("OnDragStop", function()
-        frame:StopMovingOrSizing()
-        saveFrameSettings()
-    end)
-end
+--local function enableDragging(frame)
+--    frame:SetMovable(true)
+--    frame:EnableMouse(true)
+--    frame:RegisterForDrag("LeftButton")
+--    frame:SetScript("OnDragStart", function()
+--        frame:StartMoving()
+--    end)
+--    frame:SetScript("OnDragStop", function()
+--        frame:StopMovingOrSizing()
+--        saveFrameSettings()
+--    end)
+--end
+--
+--local function disableDragging(frame)
+--    frame:SetMovable(false)
+--    frame:EnableMouse(false)
+--    frame:RegisterForDrag(nil)
+--    frame:SetScript("OnDragStart", nil)
+--    frame:SetScript("OnDragStop", nil)
+--end
 
-local function disableDragging(frame)
-    frame:SetMovable(false)
-    frame:EnableMouse(false)
-    frame:RegisterForDrag(nil)
-    frame:SetScript("OnDragStart", nil)
-    frame:SetScript("OnDragStop", nil)
-end
-
-local function toggleLock()
-    isLocked = not isLocked
-    if isLocked then
-        disableDragging(SpellBarFrame)
-        print("SpellBar frame locked.")
-    else
-        enableDragging(SpellBarFrame)
-        print("SpellBar frame unlocked. Drag to move.")
-    end
-end
+--local function toggleLock()
+--    isLocked = not isLocked
+--    if isLocked then
+--        disableDragging(SpellBarFrame)
+--        print("SpellBar frame locked.")
+--    else
+--        enableDragging(SpellBarFrame)
+--        print("SpellBar frame unlocked. Drag to move.")
+--    end
+--end
 
 local debugMode = false-- Set to true to enable debug mode
-local isLocked = true
+--local isLocked = true
 
 
 local OriginSpells = {}
@@ -107,6 +92,8 @@ local SHAMAN_SPELL = {
     {name = "Stormstrike"},
     {name = "Lightning Strike"},
     {name = "Chain Lightning"},
+    {name = "Earthshaker Slam"},
+    {name = "Grounding Totem"},
     {name = "Fire Nova Totem"},
 }
 
@@ -119,16 +106,24 @@ local MAGE_SPELL = {
 local WARLOCK_SPELL = {
     {name = "Shadowburn"},
     {name = "Soul Fire" },
+    {name = "Conflagrate"},
     {name = "Curse of Doom"},
     {name = "Death Coil"},
-    {name = "Conflagrate"},
 }
 
-local WARRIOR_SPELL = {
-    {name = "Overpower"},
-    {name = "Mortal Strike"},
-}
+--local WARRIOR_SPELL = {
+--    {name = "Overpower"},
+--    {name = "Mortal Strike"},
+--}
 
+
+local function getTableLength(t)
+    local count = 0
+    for _ in pairs(t) do
+        count = count + 1
+    end
+    return count
+end
 
 
 local function GetTexIcon(spellname)
@@ -171,46 +166,13 @@ local function createIconAndCooldown(parent, texture, xOffset)
     table.insert(timerTexts, timerText)
 end
 
-local function initializeSpellsAndItems()
-    local _, playerClass = UnitClass("player")
-    if playerClass == "SHAMAN" then
-        DebugLog("Player is a Shaman")
-        OriginSpells = SHAMAN_SPELL
-    elseif playerClass == "WARLOCK" then
-        OriginSpells = WARLOCK_SPELL
-    end
 
-    local totalIcons = 0
-    for i, spell in ipairs(OriginSpells) do
-        local spellbookId = getSpellBookId(spell.name)
-        local spellIcon = GetTexIcon(spell.name, BOOKTYPE_SPELL)
-        if spellbookId then
-            table.insert(RealSpells, {name = spell.name, id = spellbookId})
-            DebugLog("Spell book ID: " .. spellbookId .. " Spell Name: " .. spell.name .. " Spell Icon: " .. spellIcon)
-            totalIcons = totalIcons + 1
-        end
-    end
-
-    local totalWidth = totalIcons * uiOption.padding
-    local startXOffset = (uiOption.frame_w - totalWidth) / 2
-
-    for i, spell in ipairs(RealSpells) do
-        createIconAndCooldown(SpellBarFrame, GetTexIcon(spell.name), startXOffset + (i - 1) * uiOption.padding)
-    end
-end
-
-local function getTableLength(t)
-    local count = 0
-    for _ in pairs(t) do
-        count = count + 1
-    end
-    return count
-end
-
---local totalSpells = getTableLength(OriginSpells)
 
 local function updateCooldowns()
     local totalSpells = getTableLength(RealSpells)
+    if totalSpells == 0 then
+        return
+    end
     for i, spell in ipairs(RealSpells) do
         local spellBookId = spell.id
         if spellBookId then
@@ -247,40 +209,107 @@ local function updateCooldowns()
     end
 end
 
+local function cleanUp()
+    SpellBarFrame:SetScript("OnUpdate", nil) -- Stop the OnUpdate script
+    for _, icon in ipairs(icons) do
+        icon:Hide()
+    end
+    for _, cooldown in ipairs(cooldowns) do
+        cooldown:Hide()
+    end
+    for _, timerText in ipairs(timerTexts) do
+        timerText:Hide()
+    end
+    icons = {}
+    cooldowns = {}
+    timerTexts = {}
+    RealSpells = {}
+end
+
+local function initializeSpellsAndItems()
+    cleanUp()
+    local _, playerClass = UnitClass("player")
+    if playerClass == "SHAMAN" then
+        DebugLog("Player is a Shaman")
+        OriginSpells = SHAMAN_SPELL
+    elseif playerClass == "WARLOCK" then
+        OriginSpells = WARLOCK_SPELL
+    end
+
+    local totalIcons = 0
+    for i, spell in ipairs(OriginSpells) do
+        local spellbookId = getSpellBookId(spell.name)
+        local spellIcon = GetTexIcon(spell.name, BOOKTYPE_SPELL)
+        if spellbookId then
+            table.insert(RealSpells, {name = spell.name, id = spellbookId})
+            DebugLog("Spell book ID: " .. spellbookId .. " Spell Name: " .. spell.name .. " Spell Icon: " .. spellIcon)
+            totalIcons = totalIcons + 1
+        end
+    end
+
+    local totalWidth = totalIcons * uiOption.padding
+    local startXOffset = (uiOption.frame_w - totalWidth) / 2
+
+    for i, spell in ipairs(RealSpells) do
+        createIconAndCooldown(SpellBarFrame, GetTexIcon(spell.name), startXOffset + (i - 1) * uiOption.padding)
+    end
+end
+
+
+--local totalSpells = getTableLength(OriginSpells)
+
+reloadFrameSettings()
+
+local function ResetIconAndTimer()
+    SpellBarFrame:SetScript("OnUpdate", nil) -- Stop the OnUpdate script
+    for _, icon in ipairs(icons) do
+        icon:SetVertexColor(1, 1, 1, 1) -- Reset icon color to white
+    end
+    for _, timerText in ipairs(timerTexts) do
+        timerText:SetText("") -- Clear the timer text
+    end
+end
+
 SpellBarFrame:RegisterEvent("SPELL_UPDATE_COOLDOWN")
 SpellBarFrame:RegisterEvent("BAG_UPDATE_COOLDOWN")
 SpellBarFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 SpellBarFrame:RegisterEvent("ADDON_LOADED")
+SpellBarFrame:RegisterEvent("CONFIRM_TALENT_WIPE")
+-- Register for the PLAYER_REGEN_ENABLED event
+SpellBarFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+-- Register for the PLAYER_REGEN_DISABLED event
+SpellBarFrame:RegisterEvent("PLAYER_REGEN_DISABLED")
 
 SpellBarFrame:SetScript("OnEvent", function()
-    if event == "ADDON_LOADED" and arg1 == "SpellBar" then
-        -- Initialize SpellBarSettings after the addon has loaded
-        SpellBarSettings = SpellBarSettings or { offset_x = 0, offset_y = 0, scale = 1.2, opacity = 0.7 }
-        DebugSettings()
-        reloadFrameSettings()
-    end
     if event == "PLAYER_ENTERING_WORLD" then
         initializeSpellsAndItems()
-    end
-    if event == "SPELL_UPDATE_COOLDOWN" then
+    elseif event == "CONFIRM_TALENT_WIPE" then
+        SpellBarFrame:SetScript("OnUpdate", nil)
+        cleanUp()
+        C_Timer.After(1, function()
+            initializeSpellsAndItems()
+            if getTableLength(RealSpells) > 0 then
+                SpellBarFrame:SetScript("OnUpdate", updateCooldowns)
+            end
+        end)
+    elseif event == "SPELL_UPDATE_COOLDOWN" then
         updateCooldowns()
+    elseif event == "PLAYER_REGEN_ENABLED" then
+        SpellBarFrame:SetAlpha(uiOption.opacity) -- Fade the frame
+        SpellBarFrame:SetScript("OnUpdate", nil) -- Stop the OnUpdate script
+        initializeSpellsAndItems()
+        ResetIconAndTimer()
+    elseif event == "PLAYER_REGEN_DISABLED" then
+        initializeSpellsAndItems()
+        SpellBarFrame:SetAlpha(0.9) -- Restore frame opacity
+        SpellBarFrame:SetScript("OnUpdate", updateCooldowns) -- Start the OnUpdate script
     end
-
-end)
-local updateFrame = CreateFrame("Frame")
-updateFrame:SetScript("OnUpdate", function()
-    updateCooldowns()
 end)
 
 
--- Initialize frame position and lock state
-if isLocked then
-    disableDragging(SpellBarFrame)
-else
-    enableDragging(SpellBarFrame)
-end
 
 SLASH_SPELLBAR1 = "/spellbar"
+SLASH_SPELLBAR1 = "/spb"
 SlashCmdList["SPELLBAR"] = function(msg)
     local command, value = "", ""
     local spaceIndex = string.find(msg, " ")
@@ -291,49 +320,28 @@ SlashCmdList["SPELLBAR"] = function(msg)
         command = msg
     end
 
+
     if command == "debug" then
         debugMode = not debugMode
         DebugLog("Debug mode is now " .. (debugMode and "enabled" or "disabled"))
+    elseif command == "reset" then
+        DebugLog("Resetting spells and items")
         initializeSpellsAndItems()
-        updateCooldowns()
-    elseif command == "lock" then
-        isLocked = true
-        disableDragging(SpellBarFrame)
-        DebugLog("SpellBar frame locked.")
-    elseif command == "unlock" then
-        isLocked = false
-        enableDragging(SpellBarFrame)
-        DebugLog("SpellBar frame unlocked. Drag to move.")
-    --elseif command == "reset" then
-    --    resetPosition()
-    elseif command == "scale" then
-        local scale = tonumber(value)
-        if scale then
-            uiOption.scale = scale
-            SpellBarFrame:SetScale(scale)
-            saveFrameSettings()
-            DebugLog("SpellBar frame scale set to " .. scale)
-        else
-            DebugLog("Invalid scale value.")
-        end
-    elseif command == "opacity" then
-        local opacity = tonumber(value)
-        if opacity then
-            uiOption.opacity = opacity
-            SpellBarFrame:SetAlpha(opacity)
-            saveFrameSettings()
-            DebugLog("SpellBar frame opacity set to " .. opacity)
-        else
-            DebugLog("Invalid opacity value.")
-        end
+    elseif command == "disable" then
+        DebugLog("Disabling SpellBar")
+        SpellBarFrame:Hide()
+        SpellBarFrame:SetScript("OnUpdate", nil)
+    elseif command == "enable" then
+        DebugLog("Enabling SpellBar")
+        initializeSpellsAndItems()
+        SpellBarFrame:Show()
+        SpellBarFrame:SetScript("OnUpdate", updateCooldowns)
     elseif command == "help" then
         DebugLog("Available commands:")
         DebugLog("/spellbar debug - Toggle debug mode")
-        DebugLog("/spellbar lock - Lock the SpellBar frame")
-        DebugLog("/spellbar unlock - Unlock the SpellBar frame")
-        DebugLog("/spellbar reset - Reset the SpellBar frame position, scale, and opacity")
-        DebugLog("/spellbar scale <value> - Set the SpellBar frame scale")
-        DebugLog("/spellbar opacity <value> - Set the SpellBar frame opacity")
+        DebugLog("/spellbar reset - Reset spells and items")
+        DebugLog("/spellbar disable - Disable the SpellBar")
+        DebugLog("/spellbar enable - Enable the SpellBar")
     else
         DebugLog("Unknown command: " .. command)
     end
