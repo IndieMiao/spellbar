@@ -295,8 +295,8 @@ SpellBarFrame:SetScript("OnEvent", function()
     elseif event == "SPELL_UPDATE_COOLDOWN" then
         updateCooldowns()
     elseif event == "PLAYER_REGEN_ENABLED" then
-        SpellBarFrame:SetAlpha(uiOption.opacity) -- Fade the frame
         SpellBarFrame:SetScript("OnUpdate", nil) -- Stop the OnUpdate script
+        SpellBarFrame:SetAlpha(uiOption.opacity) -- Fade the frame
         initializeSpellsAndItems()
         ResetIconAndTimer()
     elseif event == "PLAYER_REGEN_DISABLED" then
